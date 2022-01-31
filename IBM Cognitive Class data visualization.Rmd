@@ -1,0 +1,132 @@
+---
+title: "R visualizations with IBM Course"
+author: "Christan Ferreira"
+date: "24/02/2021"
+output: html_notebook
+---
+
+```{r}
+#lembrar de instalar os pacotes anteriormente
+library(ggplot2)
+library(tm)
+library(wordcloud)
+library(scales)
+library(leaflet)
+library(knitr)
+library(shiny)data = mtcars
+
+```
+##Primeiro: BarPlot
+```{r}
+qplot (
+      mtcars$cyl,
+      geom = "bar",
+      fill = I("yellow"),          #insere a cor que preenche o gráfico
+      colour = I("red"),          #insere a cor que circunda o gráfico
+      xlab = "Cilindros",          #Muda o nome da coluna horizontal
+      ylab = "Numero de veiculos",  #Muda o nome da coluna vertical
+      main = "barplot"
+)
+```
+##Segundo: HistPlot 
+```{r}
+qplot (
+      mtcars$hp,
+      geom = "histogram",
+      binwidth = 25,
+      fill = I("red"),
+      colour = I("green"),
+      xlab = "Cavalos",
+      ylab = "Numero de carros",
+      main = "histograma"
+)
+```
+##COmo transformar um BarPlot num PieChart
+```{r}
+barp = ggplot(mtcars,aes(x=1 , y = sort(mtcars$carb), fill = sort(mtcars$carb))) +
+       geom_bar(stat = "identity")
+print(barp)
+
+barp = barp + coord_polar(theta = "y")
+print(barp)
+```
+##ScatterPlot
+```{r}
+ggplot(mtcars, aes(x=mpg, y=wt)) +
+      geom_point(shape = 7)
+
+mtcars$cylFactor = factor(mtcars$cyl)
+
+ggplot(mtcars, aes(x=mpg, y=wt, colour=cylFactor)) +
+      geom_point(shape = 19) +
+      labs(colour = "Cilindros")
+```
+##LinePlots
+```{r}
+EuStockDf = as.data.frame(EuStockMarkets)
+ggplot(EuStockDf, aes(x=c(1:nrow(EuStockDf)), y = DAX)) +
+      geom_line(size = 1.6, colour="red") +
+      labs(x= "Tempo", y="Stock")
+```
+
+##Linear Regression
+```{r}
+ggplot(mtcars,aes(x=mpg, y=wt))+
+   geom_point(shape=19, color= "green")+
+   geom_smooth(method = "lm", se= TRUE, color = "red")
+```
+
+##Gaussian Regression
+```{r}
+ggplot(mtcars,aes(x=mpg,y=wt,color = cylFactor))+
+   geom_point(shape=19)+
+   geom_smooth(method="auto", se=TRUE, color = "red")+
+   xlab("Milhas por galão")+
+   ylab("Peso")+
+   labs(colour = "Cilindradas")+
+   ggtitle("Regressão Gaussiana")
+```
+
+##Word Clouds
+```{r}
+dir.create("file_path")
+download.file("https://ibm.box.com/shared/static/cmid70rpa7xe4ocitcga1bve7r0kqnia.txt",
+              destfile = "file_path/churchill_speeches.txt", quiet = TRUE)
+#Escolhendo o diretoria que o nosso texto sera localizado
+dirPath = "file_path"
+#carregadno o dado como um corpus
+fala = Corpus(DirSource(dirPath))
+fala = tm_map(fala, content_transformer(tolower))
+fala = tm_map(fala,removeNumbers)
+fala = tm_map(fala, removeWords, stopwords("english"))
+fala = tm_map(fala, removePunctuation)
+fala = tm_map(fala, stripWhitespace)
+#Criar uma matrix de texto
+dtm = TermDocumentMatrix(fala)
+#transformando a matrix
+m = as.matrix(dtm)
+#organizando a matrix pela frenquencia de palavras
+v = sort(rowSums(m), decreasing = TRUE)
+#transformando em data frame
+d = data.frame(word =names(v), freq = v)
+head(d,10)
+wordcloud(words = d$word, freq = d $freq, min.freq = 1,max.words=100, random.order=FALSE, rot.per=0.35,            colors=brewer.pal(8, "Dark2"))
+
+```
+#Simple Maps in R
+```{r}
+map = leaflet()
+map  = leaflet()%>% addTiles()%>%
+        addMarkers(lng = -43.2075, lat =-22.90278, popup = 'Cidade Maravilhosa' )
+print(map)
+```
+#Maps From a Data Frame
+```{r}
+head(quakes)
+map =  leaflet(quakes) %>% addTiles() %>%
+       addCircles(lng = quakes$long, lat = quakes$lat)
+print(map)
+```
+
+
+
